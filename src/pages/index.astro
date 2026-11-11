@@ -1,0 +1,640 @@
+---
+import { getSP500Quote } from '../lib/stock';
+
+const initialQuote = await getSP500Quote();
+const isPositive = initialQuote.change >= 0;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Hello World — S&P 500 Tracker with Astro</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+			rel="stylesheet"
+		/>
+	</head>
+	<body>
+		<div class="background-glow"></div>
+		
+		<main class="container">
+			<header class="hero">
+				<div class="badge">
+					<span class="badge-dot"></span>
+					Astro Hello World Demo
+				</div>
+				<h1 class="title">
+					Hello, <span class="gradient-text">World!</span>
+				</h1>
+				<p class="subtitle">
+					A lightning-fast Astro site displaying real-time market data for the <strong>S&P 500 Index</strong>.
+				</p>
+			</header>
+
+			<!-- Stock Display Card -->
+			<section class="card" id="quote-card">
+				<div class="card-header">
+					<div class="symbol-info">
+						<span class="ticker" id="stock-symbol">{initialQuote.symbol}</span>
+						<h2 class="company-name" id="stock-name">{initialQuote.name}</h2>
+					</div>
+					<div class="status-indicator">
+						<span class="live-dot" id="live-dot"></span>
+						<span class="status-text" id="status-text">
+							{initialQuote.status === 'live' ? 'Live Feed' : 'Cached Data'}
+						</span>
+					</div>
+				</div>
+
+				<div class="price-section">
+					<div class="price-row">
+						<span class="price-value" id="price-value">
+							{initialQuote.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+						</span>
+						<span class="currency" id="currency-text">{initialQuote.currency}</span>
+					</div>
+					<div
+						class={`change-badge ${isPositive ? 'positive' : 'negative'}`}
+						id="change-badge"
+					>
+						<span class="change-icon" id="change-icon">{isPositive ? '▲' : '▼'}</span>
+						<span id="change-amount">
+							{isPositive ? '+' : ''}{initialQuote.change.toFixed(2)}
+						</span>
+						<span id="change-percent">
+							({isPositive ? '+' : ''}{initialQuote.changePercent.toFixed(2)}%)
+						</span>
+					</div>
+				</div>
+
+				<div class="metrics-grid">
+					<div class="metric-item">
+						<span class="metric-label">Previous Close</span>
+						<span class="metric-val" id="val-prev-close">
+							{initialQuote.previousClose.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+						</span>
+					</div>
+					<div class="metric-item">
+						<span class="metric-label">Day Range</span>
+						<span class="metric-val" id="val-day-range">
+							{initialQuote.dayLow.toLocaleString('en-US', { minimumFractionDigits: 2 })} - {initialQuote.dayHigh.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+						</span>
+					</div>
+					<div class="metric-item">
+						<span class="metric-label">52-Week Range</span>
+						<span class="metric-val" id="val-52w-range">
+							{initialQuote.fiftyTwoWeekLow.toLocaleString('en-US', { minimumFractionDigits: 2 })} - {initialQuote.fiftyTwoWeekHigh.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+						</span>
+					</div>
+					<div class="metric-item">
+						<span class="metric-label">Market Time</span>
+						<span class="metric-val" id="val-market-time">{initialQuote.formattedTime}</span>
+					</div>
+				</div>
+
+				<div class="card-footer">
+					<div class="last-updated">
+						<span>Refreshed: </span>
+						<strong id="last-updated-time">Just now</strong>
+					</div>
+					<div class="actions">
+						<button id="refresh-btn" class="refresh-button" type="button" aria-label="Refresh stock quote">
+							<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+								<path d="M21 3v5h-5" />
+								<path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+								<path d="M8 16H3v5" />
+							</svg>
+							<span>Refresh Quote</span>
+						</button>
+					</div>
+				</div>
+			</section>
+
+			<!-- Astro Features / Info Section -->
+			<section class="features">
+				<div class="feature-card">
+					<div class="feature-icon">🚀</div>
+					<h3>Zero JS By Default</h3>
+					<p>Astro pre-renders server-side data directly into lightweight, static HTML for top-tier speed.</p>
+				</div>
+				<div class="feature-card">
+					<div class="feature-icon">📈</div>
+					<h3>Live Financial Data</h3>
+					<p>Quotes fetched directly from market data APIs with resilient fallbacks and on-demand refresh.</p>
+				</div>
+				<div class="feature-card">
+					<div class="feature-icon">⚡</div>
+					<h3>Astro Islands</h3>
+					<p>Interactive client-side controls hydrate seamlessly without slowing down initial page loads.</p>
+				</div>
+			</section>
+
+			<footer class="footer">
+				<p>Powered by <a href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a> • Created for Kevin Lieberman</p>
+			</footer>
+		</main>
+
+		<!-- Client-Side Interactivity -->
+		<script>
+			const refreshBtn = document.getElementById('refresh-btn');
+			const priceValue = document.getElementById('price-value');
+			const changeBadge = document.getElementById('change-badge');
+			const changeIcon = document.getElementById('change-icon');
+			const changeAmount = document.getElementById('change-amount');
+			const changePercent = document.getElementById('change-percent');
+			const valPrevClose = document.getElementById('val-prev-close');
+			const valDayRange = document.getElementById('val-day-range');
+			const val52wRange = document.getElementById('val-52w-range');
+			const valMarketTime = document.getElementById('val-market-time');
+			const lastUpdatedTime = document.getElementById('last-updated-time');
+			const statusText = document.getElementById('status-text');
+
+			async function updateStock() {
+				if (!refreshBtn) return;
+				refreshBtn.classList.add('loading');
+				refreshBtn.setAttribute('disabled', 'true');
+
+				try {
+					const res = await fetch('/api/quote.json');
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const data = await res.json();
+
+					// Update DOM
+					if (priceValue) {
+						priceValue.textContent = Number(data.price).toLocaleString('en-US', {
+							minimumFractionDigits: 2,
+							maximumFractionDigits: 2
+						});
+						// Trigger a subtle pulse animation
+						priceValue.classList.remove('pulse');
+						void priceValue.offsetWidth;
+						priceValue.classList.add('pulse');
+					}
+
+					const isPos = data.change >= 0;
+					if (changeBadge) {
+						changeBadge.className = `change-badge ${isPos ? 'positive' : 'negative'}`;
+					}
+					if (changeIcon) changeIcon.textContent = isPos ? '▲' : '▼';
+					if (changeAmount) {
+						changeAmount.textContent = `${isPos ? '+' : ''}${data.change.toFixed(2)}`;
+					}
+					if (changePercent) {
+						changePercent.textContent = `(${isPos ? '+' : ''}${data.changePercent.toFixed(2)}%)`;
+					}
+
+					if (valPrevClose) {
+						valPrevClose.textContent = Number(data.previousClose).toLocaleString('en-US', { minimumFractionDigits: 2 });
+					}
+					if (valDayRange) {
+						valDayRange.textContent = `${Number(data.dayLow).toLocaleString('en-US', { minimumFractionDigits: 2 })} - ${Number(data.dayHigh).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+					}
+					if (val52wRange) {
+						val52wRange.textContent = `${Number(data.fiftyTwoWeekLow).toLocaleString('en-US', { minimumFractionDigits: 2 })} - ${Number(data.fiftyTwoWeekHigh).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+					}
+					if (valMarketTime) {
+						valMarketTime.textContent = data.formattedTime;
+					}
+					if (lastUpdatedTime) {
+						lastUpdatedTime.textContent = new Date().toLocaleTimeString();
+					}
+					if (statusText) {
+						statusText.textContent = data.status === 'live' ? 'Live Feed' : 'Cached Data';
+					}
+				} catch (err) {
+					console.error('Failed to refresh quote:', err);
+					if (lastUpdatedTime) {
+						lastUpdatedTime.textContent = 'Fetch failed (will retry)';
+					}
+				} finally {
+					refreshBtn.classList.remove('loading');
+					refreshBtn.removeAttribute('disabled');
+				}
+			}
+
+			refreshBtn?.addEventListener('click', updateStock);
+
+			// Optional periodic background refresh every 30 seconds
+			setInterval(updateStock, 30000);
+		</script>
+	</body>
+</html>
+
+<style>
+	:root {
+		--bg-color: #0b0f19;
+		--card-bg: rgba(17, 24, 39, 0.75);
+		--card-border: rgba(255, 255, 255, 0.08);
+		--text-primary: #f9fafb;
+		--text-secondary: #9ca3af;
+		--text-muted: #6b7280;
+		--accent-purple: #8b5cf6;
+		--accent-pink: #ec4899;
+		--accent-blue: #3b82f6;
+		--positive: #10b981;
+		--positive-bg: rgba(16, 185, 129, 0.12);
+		--negative: #ef4444;
+		--negative-bg: rgba(239, 68, 68, 0.12);
+		--font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		--font-mono: 'JetBrains Mono', monospace;
+	}
+
+	* {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+	}
+
+	body {
+		font-family: var(--font-sans);
+		background-color: var(--bg-color);
+		color: var(--text-primary);
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 2rem 1rem;
+		overflow-x: hidden;
+		position: relative;
+	}
+
+	.background-glow {
+		position: fixed;
+		top: -20%;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 700px;
+		height: 500px;
+		background: radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, rgba(59, 130, 246, 0.12) 40%, transparent 70%);
+		filter: blur(80px);
+		pointer-events: none;
+		z-index: 0;
+	}
+
+	.container {
+		width: 100%;
+		max-width: 680px;
+		z-index: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+	}
+
+	/* Hero */
+	.hero {
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.35rem 0.85rem;
+		font-size: 0.8rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		background: rgba(139, 92, 246, 0.12);
+		border: 1px solid rgba(139, 92, 246, 0.3);
+		border-radius: 9999px;
+		color: #c4b5fd;
+	}
+
+	.badge-dot {
+		width: 6px;
+		height: 6px;
+		background: #a78bfa;
+		border-radius: 50%;
+		box-shadow: 0 0 8px #a78bfa;
+	}
+
+	.title {
+		font-size: 2.75rem;
+		font-weight: 800;
+		letter-spacing: -0.03em;
+		line-height: 1.15;
+	}
+
+	.gradient-text {
+		background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #3b82f6 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+	}
+
+	.subtitle {
+		font-size: 1.05rem;
+		color: var(--text-secondary);
+		max-width: 480px;
+		line-height: 1.5;
+	}
+
+	/* Stock Card */
+	.card {
+		background: var(--card-bg);
+		border: 1px solid var(--card-border);
+		backdrop-filter: blur(16px);
+		-webkit-backdrop-filter: blur(16px);
+		border-radius: 1.25rem;
+		padding: 1.75rem;
+		box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+		transition: transform 0.2s ease, border-color 0.2s ease;
+	}
+
+	.card:hover {
+		border-color: rgba(139, 92, 246, 0.25);
+	}
+
+	.card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		border-bottom: 1px solid var(--card-border);
+		padding-bottom: 1.25rem;
+	}
+
+	.ticker {
+		display: inline-block;
+		font-family: var(--font-mono);
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: #a78bfa;
+		background: rgba(139, 92, 246, 0.1);
+		padding: 0.2rem 0.5rem;
+		border-radius: 4px;
+		margin-bottom: 0.35rem;
+	}
+
+	.company-name {
+		font-size: 1.4rem;
+		font-weight: 700;
+		color: var(--text-primary);
+	}
+
+	.status-indicator {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: var(--text-muted);
+		background: rgba(255, 255, 255, 0.04);
+		padding: 0.3rem 0.65rem;
+		border-radius: 9999px;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.live-dot {
+		width: 7px;
+		height: 7px;
+		background-color: var(--positive);
+		border-radius: 50%;
+		box-shadow: 0 0 6px var(--positive);
+		animation: pulse-dot 2s infinite;
+	}
+
+	@keyframes pulse-dot {
+		0%, 100% { opacity: 1; transform: scale(1); }
+		50% { opacity: 0.4; transform: scale(0.85); }
+	}
+
+	/* Price Section */
+	.price-section {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 1rem;
+		padding: 1.5rem 0;
+	}
+
+	.price-row {
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+	}
+
+	.price-value {
+		font-family: var(--font-mono);
+		font-size: 2.75rem;
+		font-weight: 800;
+		letter-spacing: -0.02em;
+		transition: color 0.3s ease;
+	}
+
+	.price-value.pulse {
+		color: #60a5fa;
+	}
+
+	.currency {
+		font-size: 1rem;
+		color: var(--text-muted);
+		font-weight: 600;
+	}
+
+	.change-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-family: var(--font-mono);
+		font-size: 0.95rem;
+		font-weight: 600;
+		padding: 0.4rem 0.8rem;
+		border-radius: 8px;
+		transition: all 0.2s ease;
+	}
+
+	.change-badge.positive {
+		color: var(--positive);
+		background: var(--positive-bg);
+		border: 1px solid rgba(16, 185, 129, 0.25);
+	}
+
+	.change-badge.negative {
+		color: var(--negative);
+		background: var(--negative-bg);
+		border: 1px solid rgba(239, 68, 68, 0.25);
+	}
+
+	.change-icon {
+		font-size: 0.75rem;
+	}
+
+	/* Metrics Grid */
+	.metrics-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1rem;
+		background: rgba(0, 0, 0, 0.25);
+		border: 1px solid rgba(255, 255, 255, 0.04);
+		border-radius: 0.75rem;
+		padding: 1.25rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.metric-item {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.metric-label {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		font-weight: 500;
+	}
+
+	.metric-val {
+		font-family: var(--font-mono);
+		font-size: 0.95rem;
+		font-weight: 600;
+		color: var(--text-primary);
+	}
+
+	/* Card Footer */
+	.card-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		font-size: 0.85rem;
+		color: var(--text-secondary);
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--card-border);
+		flex-wrap: wrap;
+		gap: 0.75rem;
+	}
+
+	.refresh-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		background: rgba(255, 255, 255, 0.06);
+		color: var(--text-primary);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		padding: 0.5rem 1rem;
+		border-radius: 8px;
+		font-size: 0.85rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.refresh-button:hover:not(:disabled) {
+		background: rgba(139, 92, 246, 0.2);
+		border-color: rgba(139, 92, 246, 0.4);
+		color: #fff;
+		transform: translateY(-1px);
+	}
+
+	.refresh-button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.refresh-icon {
+		width: 15px;
+		height: 15px;
+		transition: transform 0.3s ease;
+	}
+
+	.refresh-button.loading .refresh-icon {
+		animation: spin 0.8s linear infinite;
+	}
+
+	@keyframes spin {
+		from { transform: rotate(0deg); }
+		to { transform: rotate(360deg); }
+	}
+
+	/* Features */
+	.features {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1rem;
+	}
+
+	.feature-card {
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 0.85rem;
+		padding: 1.25rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.feature-icon {
+		font-size: 1.5rem;
+	}
+
+	.feature-card h3 {
+		font-size: 0.95rem;
+		font-weight: 600;
+		color: var(--text-primary);
+	}
+
+	.feature-card p {
+		font-size: 0.8rem;
+		color: var(--text-muted);
+		line-height: 1.4;
+	}
+
+	/* Footer */
+	.footer {
+		text-align: center;
+		font-size: 0.85rem;
+		color: var(--text-muted);
+		padding-top: 1rem;
+	}
+
+	.footer a {
+		color: #a78bfa;
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	.footer a:hover {
+		text-decoration: underline;
+	}
+
+	@media (max-width: 640px) {
+		.title {
+			font-size: 2.2rem;
+		}
+
+		.price-value {
+			font-size: 2.2rem;
+		}
+
+		.metrics-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.features {
+			grid-template-columns: 1fr;
+		}
+
+		.card-footer {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.refresh-button {
+			justify-content: center;
+		}
+	}
+</style>
