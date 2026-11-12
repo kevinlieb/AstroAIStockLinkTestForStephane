@@ -13,7 +13,7 @@ const isPositive = initialQuote.change >= 0;
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Hello World — S&P 500 Tracker with Astro</title>
+		<title>Hello World — S&P 500 Tracker with Live Graph</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
@@ -23,7 +23,7 @@ const isPositive = initialQuote.change >= 0;
 	</head>
 	<body>
 		<div class="background-glow"></div>
-		
+
 		<main class="container">
 			<header class="hero">
 				<div class="badge">
@@ -34,7 +34,7 @@ const isPositive = initialQuote.change >= 0;
 					Hello, <span class="gradient-text">World!</span>
 				</h1>
 				<p class="subtitle">
-					A lightning-fast Astro site displaying real-time market data for the <strong>S&P 500 Index</strong>.
+					A high-performance Astro website featuring real-time market data and a <strong>live streaming graph</strong> for the S&P 500 Index.
 				</p>
 			</header>
 
@@ -74,6 +74,81 @@ const isPositive = initialQuote.change >= 0;
 					</div>
 				</div>
 
+				<!-- Live Interactive Graph -->
+				<div class="chart-wrapper">
+					<div class="chart-header">
+						<div class="chart-title-group">
+							<span class="chart-title">Intraday Live Performance</span>
+							<span class="stream-pill" id="stream-indicator">
+								<span class="stream-dot"></span>
+								STREAMING
+							</span>
+						</div>
+						<div class="chart-controls">
+							<button id="sim-toggle-btn" class="chart-btn" type="button" title="Toggle simulated live ticks">
+								<span class="sim-icon">⚡</span>
+								<span id="sim-btn-text">Simulate Ticks: OFF</span>
+							</button>
+						</div>
+					</div>
+
+					<div class="chart-container" id="chart-container">
+						<svg id="stock-chart" viewBox="0 0 600 220" preserveAspectRatio="none">
+							<defs>
+								<linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+									<stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.45" />
+									<stop offset="70%" stop-color="#3b82f6" stop-opacity="0.1" />
+									<stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0" />
+								</linearGradient>
+								<filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+									<feGaussianBlur stdDeviation="3" result="blur" />
+									<feComposite in="SourceGraphic" in2="blur" operator="over" />
+								</filter>
+							</defs>
+
+							<!-- Horizontal Grid Lines -->
+							<line class="grid-line" x1="0" y1="35" x2="600" y2="35" />
+							<line class="grid-line" x1="0" y1="105" x2="600" y2="105" />
+							<line class="grid-line" x1="0" y1="175" x2="600" y2="175" />
+
+							<!-- Price Labels Inside SVG -->
+							<text class="axis-label" id="axis-max" x="12" y="30">--</text>
+							<text class="axis-label" id="axis-mid" x="12" y="100">--</text>
+							<text class="axis-label" id="axis-min" x="12" y="170">--</text>
+
+							<!-- Area & Line Paths -->
+							<path id="chart-area" class="chart-area" d="" fill="url(#chartGradient)"></path>
+							<path id="chart-line" class="chart-line" d="" filter="url(#glow)"></path>
+
+							<!-- Pulse Marker for Latest Data Point -->
+							<circle id="pulse-outer" class="pulse-ring" cx="0" cy="0" r="8"></circle>
+							<circle id="pulse-point" class="pulse-core" cx="0" cy="0" r="4.5"></circle>
+
+							<!-- Crosshair Guide -->
+							<line id="crosshair-x" class="crosshair-line" x1="0" y1="20" x2="0" y2="190" visibility="hidden"></line>
+							<circle id="crosshair-dot" class="crosshair-dot" cx="0" cy="0" r="5" visibility="hidden"></circle>
+						</svg>
+
+						<!-- Floating Interactive Tooltip -->
+						<div id="chart-tooltip" class="chart-tooltip" style="display: none;">
+							<div class="tooltip-price" id="tooltip-price">--</div>
+							<div class="tooltip-time" id="tooltip-time">--</div>
+						</div>
+					</div>
+
+					<div class="chart-time-row">
+						<span id="chart-start-time">--</span>
+						<span id="chart-point-count" class="point-count-badge">Loading points...</span>
+						<span id="chart-end-time">--</span>
+					</div>
+
+					<!-- Live incoming data tick bar -->
+					<div class="live-ticker-bar">
+						<span class="live-ticker-label">Incoming Tick Feed:</span>
+						<span class="live-ticker-val" id="live-ticker-text">Waiting for first stream event...</span>
+					</div>
+				</div>
+
 				<div class="metrics-grid">
 					<div class="metric-item">
 						<span class="metric-label">Previous Close</span>
@@ -101,7 +176,7 @@ const isPositive = initialQuote.change >= 0;
 
 				<div class="card-footer">
 					<div class="last-updated">
-						<span>Refreshed: </span>
+						<span>Last Updated: </span>
 						<strong id="last-updated-time">Just now</strong>
 					</div>
 					<div class="actions">
@@ -121,29 +196,69 @@ const isPositive = initialQuote.change >= 0;
 			<!-- Astro Features / Info Section -->
 			<section class="features">
 				<div class="feature-card">
-					<div class="feature-icon">🚀</div>
-					<h3>Zero JS By Default</h3>
-					<p>Astro pre-renders server-side data directly into lightweight, static HTML for top-tier speed.</p>
-				</div>
-				<div class="feature-card">
 					<div class="feature-icon">📈</div>
-					<h3>Live Financial Data</h3>
-					<p>Quotes fetched directly from market data APIs with resilient fallbacks and on-demand refresh.</p>
+					<h3>Live SVG Streaming</h3>
+					<p>Pure modern SVG graph rendering with zero heavy chart dependencies, hardware accelerated.</p>
 				</div>
 				<div class="feature-card">
 					<div class="feature-icon">⚡</div>
-					<h3>Astro Islands</h3>
-					<p>Interactive client-side controls hydrate seamlessly without slowing down initial page loads.</p>
+					<h3>Dynamic Ingestion</h3>
+					<p>Automatically records and plots incoming market ticks as they arrive without reloading.</p>
+				</div>
+				<div class="feature-card">
+					<div class="feature-icon">🚀</div>
+					<h3>Server Pre-rendered</h3>
+					<p>Initial state renders instantaneously on the server and hydrates into a reactive client chart.</p>
 				</div>
 			</section>
 
 			<footer class="footer">
-				<p>Powered by <a href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a> • Created for Kevin Lieberman</p>
+				<p>Powered by <a href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a> • S&P 500 Live Tracker</p>
 			</footer>
 		</main>
 
-		<!-- Client-Side Interactivity -->
+		<!-- Pass server-rendered initial quote & history to client script -->
+		<script id="initial-data" type="application/json" set:html={JSON.stringify(initialQuote)}></script>
+
+		<!-- Client-Side Live Graph & Interactivity -->
 		<script>
+			interface ChartPoint {
+				timestamp: number;
+				time: string;
+				price: number;
+			}
+
+			interface StockData {
+				symbol: string;
+				name: string;
+				price: number;
+				change: number;
+				changePercent: number;
+				previousClose: number;
+				dayHigh: number;
+				dayLow: number;
+				fiftyTwoWeekHigh: number;
+				fiftyTwoWeekLow: number;
+				currency: string;
+				timestamp: number;
+				formattedTime: string;
+				isPositive: boolean;
+				status: 'live' | 'fallback';
+				history?: ChartPoint[];
+			}
+
+			// Parse initial data
+			const rawDataEl = document.getElementById('initial-data');
+			let initialData: StockData | null = null;
+			try {
+				if (rawDataEl?.textContent) {
+					initialData = JSON.parse(rawDataEl.textContent);
+				}
+			} catch (e) {
+				console.error('Failed to parse initial data', e);
+			}
+
+			// Elements
 			const refreshBtn = document.getElementById('refresh-btn');
 			const priceValue = document.getElementById('price-value');
 			const changeBadge = document.getElementById('change-badge');
@@ -157,6 +272,199 @@ const isPositive = initialQuote.change >= 0;
 			const lastUpdatedTime = document.getElementById('last-updated-time');
 			const statusText = document.getElementById('status-text');
 
+			// Chart Elements
+			const chartContainer = document.getElementById('chart-container');
+			const chartSvg = document.getElementById('stock-chart');
+			const chartLine = document.getElementById('chart-line') as unknown as SVGPathElement | null;
+			const chartArea = document.getElementById('chart-area') as unknown as SVGPathElement | null;
+			const pulseOuter = document.getElementById('pulse-outer') as unknown as SVGCircleElement | null;
+			const pulsePoint = document.getElementById('pulse-point') as unknown as SVGCircleElement | null;
+			const axisMax = document.getElementById('axis-max');
+			const axisMid = document.getElementById('axis-mid');
+			const axisMin = document.getElementById('axis-min');
+			const chartStartTime = document.getElementById('chart-start-time');
+			const chartEndTime = document.getElementById('chart-end-time');
+			const chartPointCount = document.getElementById('chart-point-count');
+			const crosshairX = document.getElementById('crosshair-x') as unknown as SVGLineElement | null;
+			const crosshairDot = document.getElementById('crosshair-dot') as unknown as SVGCircleElement | null;
+			const tooltip = document.getElementById('chart-tooltip');
+			const tooltipPrice = document.getElementById('tooltip-price');
+			const tooltipTime = document.getElementById('tooltip-time');
+			const liveTickerText = document.getElementById('live-ticker-text');
+			const streamIndicator = document.getElementById('stream-indicator');
+			const simToggleBtn = document.getElementById('sim-toggle-btn');
+			const simBtnText = document.getElementById('sim-btn-text');
+
+			// Chart state
+			let chartData: ChartPoint[] = initialData?.history || [];
+			let currentPrice = initialData?.price || 7600;
+			let previousClose = initialData?.previousClose || 7550;
+			let calculatedPoints: Array<{ x: number; y: number; data: ChartPoint }> = [];
+			let simulateTicks = false;
+			let simIntervalId: any = null;
+			let totalTicksReceived = chartData.length;
+
+			// Flash ticker text on incoming tick
+			function logTick(price: number, timeStr: string, source = 'Live Feed') {
+				totalTicksReceived++;
+				if (liveTickerText) {
+					liveTickerText.innerHTML = `<strong>${source}:</strong> $${price.toFixed(2)} at ${timeStr} • Total ticks: ${totalTicksReceived}`;
+					liveTickerText.classList.remove('tick-flash');
+					void liveTickerText.offsetWidth;
+					liveTickerText.classList.add('tick-flash');
+				}
+				if (streamIndicator) {
+					streamIndicator.classList.remove('active');
+					void streamIndicator.offsetWidth;
+					streamIndicator.classList.add('active');
+				}
+			}
+
+			// Render the SVG graph
+			function renderChart() {
+				if (!chartSvg || chartData.length < 2) return;
+
+				const svgW = 600;
+				const svgH = 220;
+				const padTop = 24;
+				const padBottom = 34;
+				const padLeft = 14;
+				const padRight = 14;
+
+				const innerW = svgW - padLeft - padRight;
+				const innerH = svgH - padTop - padBottom;
+
+				const prices = chartData.map((d) => d.price);
+				let minP = Math.min(...prices);
+				let maxP = Math.max(...prices);
+
+				if (minP === maxP) {
+					minP -= 2;
+					maxP += 2;
+				}
+
+				// 6% vertical padding inside bounds
+				const range = maxP - minP;
+				const chartMin = minP - range * 0.06;
+				const chartMax = maxP + range * 0.06;
+				const chartRange = chartMax - chartMin;
+
+				calculatedPoints = chartData.map((pt, idx) => {
+					const x = padLeft + (idx / (chartData.length - 1)) * innerW;
+					const y = padTop + (1 - (pt.price - chartMin) / chartRange) * innerH;
+					return { x, y, data: pt };
+				});
+
+				// Build SVG Path
+				let pathStr = `M ${calculatedPoints[0].x.toFixed(1)} ${calculatedPoints[0].y.toFixed(1)}`;
+				for (let i = 1; i < calculatedPoints.length; i++) {
+					pathStr += ` L ${calculatedPoints[i].x.toFixed(1)} ${calculatedPoints[i].y.toFixed(1)}`;
+				}
+
+				const lastPt = calculatedPoints[calculatedPoints.length - 1];
+				const firstPt = calculatedPoints[0];
+				const areaStr = `${pathStr} L ${lastPt.x.toFixed(1)} ${svgH - padBottom} L ${firstPt.x.toFixed(1)} ${svgH - padBottom} Z`;
+
+				if (chartLine) chartLine.setAttribute('d', pathStr);
+				if (chartArea) chartArea.setAttribute('d', areaStr);
+
+				// Move pulse marker to the latest point
+				if (pulseOuter) {
+					pulseOuter.setAttribute('cx', lastPt.x.toFixed(1));
+					pulseOuter.setAttribute('cy', lastPt.y.toFixed(1));
+				}
+				if (pulsePoint) {
+					pulsePoint.setAttribute('cx', lastPt.x.toFixed(1));
+					pulsePoint.setAttribute('cy', lastPt.y.toFixed(1));
+				}
+
+				// Update Axis Labels
+				if (axisMax) axisMax.textContent = `$${maxP.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+				if (axisMid) axisMid.textContent = `$${((maxP + minP) / 2).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+				if (axisMin) axisMin.textContent = `$${minP.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+				if (chartStartTime) chartStartTime.textContent = chartData[0].time;
+				if (chartEndTime) chartEndTime.textContent = chartData[chartData.length - 1].time;
+				if (chartPointCount) chartPointCount.textContent = `${chartData.length} data points recorded`;
+
+				// Color theme based on gain or loss
+				const isGain = chartData[chartData.length - 1].price >= chartData[0].price;
+				chartSvg.classList.toggle('chart-gain', isGain);
+				chartSvg.classList.toggle('chart-loss', !isGain);
+			}
+
+			// Update values in DOM
+			function updateDOMWithData(data: StockData) {
+				currentPrice = data.price;
+				previousClose = data.previousClose;
+
+				if (priceValue) {
+					priceValue.textContent = Number(data.price).toLocaleString('en-US', {
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2
+					});
+					priceValue.classList.remove('pulse');
+					void priceValue.offsetWidth;
+					priceValue.classList.add('pulse');
+				}
+
+				const isPos = data.change >= 0;
+				if (changeBadge) {
+					changeBadge.className = `change-badge ${isPos ? 'positive' : 'negative'}`;
+				}
+				if (changeIcon) changeIcon.textContent = isPos ? '▲' : '▼';
+				if (changeAmount) {
+					changeAmount.textContent = `${isPos ? '+' : ''}${data.change.toFixed(2)}`;
+				}
+				if (changePercent) {
+					changePercent.textContent = `(${isPos ? '+' : ''}${data.changePercent.toFixed(2)}%)`;
+				}
+
+				if (valPrevClose) {
+					valPrevClose.textContent = Number(data.previousClose).toLocaleString('en-US', { minimumFractionDigits: 2 });
+				}
+				if (valDayRange) {
+					valDayRange.textContent = `${Number(data.dayLow).toLocaleString('en-US', { minimumFractionDigits: 2 })} - ${Number(data.dayHigh).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+				}
+				if (val52wRange) {
+					val52wRange.textContent = `${Number(data.fiftyTwoWeekLow).toLocaleString('en-US', { minimumFractionDigits: 2 })} - ${Number(data.fiftyTwoWeekHigh).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+				}
+				if (valMarketTime) {
+					valMarketTime.textContent = data.formattedTime;
+				}
+				if (lastUpdatedTime) {
+					lastUpdatedTime.textContent = new Date().toLocaleTimeString();
+				}
+				if (statusText) {
+					statusText.textContent = data.status === 'live' ? 'Live Feed' : 'Cached Data';
+				}
+
+				// Merge server history with our local points
+				if (data.history && data.history.length > 0) {
+					const latestLocalTs = chartData.length > 0 ? chartData[chartData.length - 1].timestamp : 0;
+					const newPoints = data.history.filter((pt) => pt.timestamp > latestLocalTs);
+
+					if (newPoints.length > 0) {
+						chartData.push(...newPoints);
+						logTick(data.price, newPoints[newPoints.length - 1].time, 'Live Feed');
+					} else if (chartData.length === 0) {
+						chartData = data.history;
+					} else {
+						// Update the last point with latest price
+						chartData[chartData.length - 1].price = data.price;
+					}
+				} else {
+					// Append single latest point
+					const now = Date.now();
+					const timeStr = new Date(now).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+					chartData.push({ timestamp: now, time: timeStr, price: data.price });
+					logTick(data.price, timeStr, 'Live Feed');
+				}
+
+				renderChart();
+			}
+
+			// Fetch live stock quote from API
 			async function updateStock() {
 				if (!refreshBtn) return;
 				refreshBtn.classList.add('loading');
@@ -165,54 +473,12 @@ const isPositive = initialQuote.change >= 0;
 				try {
 					const res = await fetch('/api/quote.json');
 					if (!res.ok) throw new Error(`HTTP ${res.status}`);
-					const data = await res.json();
-
-					// Update DOM
-					if (priceValue) {
-						priceValue.textContent = Number(data.price).toLocaleString('en-US', {
-							minimumFractionDigits: 2,
-							maximumFractionDigits: 2
-						});
-						// Trigger a subtle pulse animation
-						priceValue.classList.remove('pulse');
-						void priceValue.offsetWidth;
-						priceValue.classList.add('pulse');
-					}
-
-					const isPos = data.change >= 0;
-					if (changeBadge) {
-						changeBadge.className = `change-badge ${isPos ? 'positive' : 'negative'}`;
-					}
-					if (changeIcon) changeIcon.textContent = isPos ? '▲' : '▼';
-					if (changeAmount) {
-						changeAmount.textContent = `${isPos ? '+' : ''}${data.change.toFixed(2)}`;
-					}
-					if (changePercent) {
-						changePercent.textContent = `(${isPos ? '+' : ''}${data.changePercent.toFixed(2)}%)`;
-					}
-
-					if (valPrevClose) {
-						valPrevClose.textContent = Number(data.previousClose).toLocaleString('en-US', { minimumFractionDigits: 2 });
-					}
-					if (valDayRange) {
-						valDayRange.textContent = `${Number(data.dayLow).toLocaleString('en-US', { minimumFractionDigits: 2 })} - ${Number(data.dayHigh).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-					}
-					if (val52wRange) {
-						val52wRange.textContent = `${Number(data.fiftyTwoWeekLow).toLocaleString('en-US', { minimumFractionDigits: 2 })} - ${Number(data.fiftyTwoWeekHigh).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-					}
-					if (valMarketTime) {
-						valMarketTime.textContent = data.formattedTime;
-					}
-					if (lastUpdatedTime) {
-						lastUpdatedTime.textContent = new Date().toLocaleTimeString();
-					}
-					if (statusText) {
-						statusText.textContent = data.status === 'live' ? 'Live Feed' : 'Cached Data';
-					}
+					const data: StockData = await res.json();
+					updateDOMWithData(data);
 				} catch (err) {
 					console.error('Failed to refresh quote:', err);
 					if (lastUpdatedTime) {
-						lastUpdatedTime.textContent = 'Fetch failed (will retry)';
+						lastUpdatedTime.textContent = 'Fetch failed (retrying)';
 					}
 				} finally {
 					refreshBtn.classList.remove('loading');
@@ -220,10 +486,138 @@ const isPositive = initialQuote.change >= 0;
 				}
 			}
 
+			// Interactive Crosshair & Tooltip
+			if (chartContainer && chartSvg) {
+				chartContainer.addEventListener('mousemove', (e) => {
+					if (calculatedPoints.length < 2) return;
+
+					const rect = chartContainer.getBoundingClientRect();
+					const mouseX = e.clientX - rect.left;
+					const ratioX = mouseX / rect.width;
+					const targetSvgX = ratioX * 600;
+
+					// Find nearest point
+					let nearest = calculatedPoints[0];
+					let minDiff = Math.abs(calculatedPoints[0].x - targetSvgX);
+
+					for (let i = 1; i < calculatedPoints.length; i++) {
+						const diff = Math.abs(calculatedPoints[i].x - targetSvgX);
+						if (diff < minDiff) {
+							minDiff = diff;
+							nearest = calculatedPoints[i];
+						}
+					}
+
+					if (crosshairX) {
+						crosshairX.setAttribute('x1', nearest.x.toFixed(1));
+						crosshairX.setAttribute('x2', nearest.x.toFixed(1));
+						crosshairX.setAttribute('visibility', 'visible');
+					}
+
+					if (crosshairDot) {
+						crosshairDot.setAttribute('cx', nearest.x.toFixed(1));
+						crosshairDot.setAttribute('cy', nearest.y.toFixed(1));
+						crosshairDot.setAttribute('visibility', 'visible');
+					}
+
+					if (tooltip && tooltipPrice && tooltipTime) {
+						tooltipPrice.textContent = `$${nearest.data.price.toFixed(2)}`;
+						tooltipTime.textContent = nearest.data.time;
+						tooltip.style.display = 'block';
+
+						const tooltipW = 110;
+						let posX = (nearest.x / 600) * rect.width - tooltipW / 2;
+						posX = Math.max(8, Math.min(rect.width - tooltipW - 8, posX));
+						const posY = Math.max(10, (nearest.y / 220) * rect.height - 52);
+
+						tooltip.style.left = `${posX}px`;
+						tooltip.style.top = `${posY}px`;
+					}
+				});
+
+				chartContainer.addEventListener('mouseleave', () => {
+					if (crosshairX) crosshairX.setAttribute('visibility', 'hidden');
+					if (crosshairDot) crosshairDot.setAttribute('visibility', 'hidden');
+					if (tooltip) tooltip.style.display = 'none';
+				});
+			}
+
+			// Live Simulation Mode: injects dynamic incoming market micro-ticks
+			function toggleSimulateTicks() {
+				simulateTicks = !simulateTicks;
+
+				if (simulateTicks) {
+					if (simBtnText) simBtnText.textContent = 'Simulate Ticks: ON';
+					simToggleBtn?.classList.add('active');
+
+					simIntervalId = setInterval(() => {
+						const delta = Number(((Math.random() - 0.48) * 1.8).toFixed(2));
+						currentPrice = Number((currentPrice + delta).toFixed(2));
+						const now = Date.now();
+						const timeStr = new Date(now).toLocaleTimeString('en-US', {
+							hour: 'numeric',
+							minute: '2-digit',
+							second: '2-digit'
+						});
+
+						// Append live tick to chart
+						chartData.push({
+							timestamp: now,
+							time: timeStr,
+							price: currentPrice
+						});
+
+						// Limit chart memory to last 60 points for performance
+						if (chartData.length > 60) chartData.shift();
+
+						// Recalculate change against previous close
+						const change = Number((currentPrice - previousClose).toFixed(2));
+						const changePercent = Number(((change / previousClose) * 100).toFixed(2));
+
+						if (priceValue) {
+							priceValue.textContent = currentPrice.toLocaleString('en-US', {
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2
+							});
+							priceValue.classList.remove('pulse');
+							void priceValue.offsetWidth;
+							priceValue.classList.add('pulse');
+						}
+
+						const isPos = change >= 0;
+						if (changeBadge) {
+							changeBadge.className = `change-badge ${isPos ? 'positive' : 'negative'}`;
+						}
+						if (changeIcon) changeIcon.textContent = isPos ? '▲' : '▼';
+						if (changeAmount) {
+							changeAmount.textContent = `${isPos ? '+' : ''}${change.toFixed(2)}`;
+						}
+						if (changePercent) {
+							changePercent.textContent = `(${isPos ? '+' : ''}${changePercent.toFixed(2)}%)`;
+						}
+
+						logTick(currentPrice, timeStr, 'Simulated Tick');
+						renderChart();
+					}, 2400);
+				} else {
+					if (simBtnText) simBtnText.textContent = 'Simulate Ticks: OFF';
+					simToggleBtn?.classList.remove('active');
+					if (simIntervalId) {
+						clearInterval(simIntervalId);
+						simIntervalId = null;
+					}
+				}
+			}
+
+			simToggleBtn?.addEventListener('click', toggleSimulateTicks);
 			refreshBtn?.addEventListener('click', updateStock);
 
-			// Optional periodic background refresh every 30 seconds
-			setInterval(updateStock, 30000);
+			// Initial chart draw
+			renderChart();
+			logTick(currentPrice, new Date().toLocaleTimeString(), 'Initial Load');
+
+			// Automatic live poll from Yahoo Finance API every 6 seconds
+			setInterval(updateStock, 6000);
 		</script>
 	</body>
 </html>
@@ -231,7 +625,7 @@ const isPositive = initialQuote.change >= 0;
 <style>
 	:root {
 		--bg-color: #0b0f19;
-		--card-bg: rgba(17, 24, 39, 0.75);
+		--card-bg: rgba(17, 24, 39, 0.78);
 		--card-border: rgba(255, 255, 255, 0.08);
 		--text-primary: #f9fafb;
 		--text-secondary: #9ca3af;
@@ -262,7 +656,7 @@ const isPositive = initialQuote.change >= 0;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 2rem 1rem;
+		padding: 2.5rem 1rem;
 		overflow-x: hidden;
 		position: relative;
 	}
@@ -272,17 +666,17 @@ const isPositive = initialQuote.change >= 0;
 		top: -20%;
 		left: 50%;
 		transform: translateX(-50%);
-		width: 700px;
-		height: 500px;
-		background: radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, rgba(59, 130, 246, 0.12) 40%, transparent 70%);
-		filter: blur(80px);
+		width: 760px;
+		height: 520px;
+		background: radial-gradient(circle, rgba(139, 92, 246, 0.22) 0%, rgba(59, 130, 246, 0.14) 40%, transparent 70%);
+		filter: blur(85px);
 		pointer-events: none;
 		z-index: 0;
 	}
 
 	.container {
 		width: 100%;
-		max-width: 680px;
+		max-width: 720px;
 		z-index: 1;
 		display: flex;
 		flex-direction: column;
@@ -337,7 +731,7 @@ const isPositive = initialQuote.change >= 0;
 	.subtitle {
 		font-size: 1.05rem;
 		color: var(--text-secondary);
-		max-width: 480px;
+		max-width: 520px;
 		line-height: 1.5;
 	}
 
@@ -354,7 +748,7 @@ const isPositive = initialQuote.change >= 0;
 	}
 
 	.card:hover {
-		border-color: rgba(139, 92, 246, 0.25);
+		border-color: rgba(139, 92, 246, 0.3);
 	}
 
 	.card-header {
@@ -417,7 +811,7 @@ const isPositive = initialQuote.change >= 0;
 		justify-content: space-between;
 		flex-wrap: wrap;
 		gap: 1rem;
-		padding: 1.5rem 0;
+		padding: 1.5rem 0 1rem 0;
 	}
 
 	.price-row {
@@ -470,6 +864,274 @@ const isPositive = initialQuote.change >= 0;
 
 	.change-icon {
 		font-size: 0.75rem;
+	}
+
+	/* Live Chart Section */
+	.chart-wrapper {
+		background: rgba(0, 0, 0, 0.35);
+		border: 1px solid rgba(255, 255, 255, 0.06);
+		border-radius: 0.85rem;
+		padding: 1rem 1rem 0.75rem 1rem;
+		margin: 0.5rem 0 1.25rem 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.chart-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.chart-title-group {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	.chart-title {
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--text-secondary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.stream-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		padding: 0.15rem 0.45rem;
+		border-radius: 9999px;
+		background: rgba(59, 130, 246, 0.15);
+		color: #60a5fa;
+		border: 1px solid rgba(59, 130, 246, 0.3);
+		transition: all 0.3s ease;
+	}
+
+	.stream-pill.active {
+		background: rgba(16, 185, 129, 0.2);
+		color: #34d399;
+		border-color: rgba(16, 185, 129, 0.4);
+	}
+
+	.stream-dot {
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background-color: currentColor;
+	}
+
+	.chart-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.chart-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--text-muted);
+		background: rgba(255, 255, 255, 0.04);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		padding: 0.25rem 0.65rem;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.chart-btn:hover {
+		color: var(--text-primary);
+		background: rgba(255, 255, 255, 0.08);
+	}
+
+	.chart-btn.active {
+		color: #fbbf24;
+		border-color: rgba(251, 191, 36, 0.4);
+		background: rgba(251, 191, 36, 0.12);
+	}
+
+	.sim-icon {
+		font-size: 0.85rem;
+	}
+
+	.chart-container {
+		position: relative;
+		width: 100%;
+		height: 200px;
+		user-select: none;
+		cursor: crosshair;
+	}
+
+	#stock-chart {
+		width: 100%;
+		height: 100%;
+		display: block;
+		overflow: visible;
+	}
+
+	/* Chart Lines & Colors */
+	.grid-line {
+		stroke: rgba(255, 255, 255, 0.04);
+		stroke-width: 1;
+		stroke-dasharray: 4 4;
+	}
+
+	.axis-label {
+		fill: rgba(255, 255, 255, 0.22);
+		font-family: var(--font-mono);
+		font-size: 11px;
+	}
+
+	.chart-line {
+		fill: none;
+		stroke: #a78bfa;
+		stroke-width: 2.2;
+		stroke-linejoin: round;
+		stroke-linecap: round;
+		transition: stroke 0.3s ease;
+	}
+
+	.chart-gain .chart-line {
+		stroke: #10b981;
+	}
+
+	.chart-loss .chart-line {
+		stroke: #f43f5e;
+	}
+
+	.chart-area {
+		opacity: 0.85;
+	}
+
+	.pulse-ring {
+		fill: none;
+		stroke: #a78bfa;
+		stroke-width: 1.5;
+		opacity: 0.6;
+		animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+	}
+
+	.pulse-core {
+		fill: #a78bfa;
+		filter: drop-shadow(0 0 6px #a78bfa);
+	}
+
+	.chart-gain .pulse-ring,
+	.chart-gain .pulse-core {
+		stroke: #10b981;
+		fill: #10b981;
+	}
+
+	.chart-loss .pulse-ring,
+	.chart-loss .pulse-core {
+		stroke: #f43f5e;
+		fill: #f43f5e;
+	}
+
+	@keyframes pulse-ring {
+		0% { r: 4px; opacity: 0.9; }
+		100% { r: 14px; opacity: 0; }
+	}
+
+	/* Crosshair */
+	.crosshair-line {
+		stroke: rgba(255, 255, 255, 0.35);
+		stroke-width: 1;
+		stroke-dasharray: 3 3;
+	}
+
+	.crosshair-dot {
+		fill: #ffffff;
+		stroke: #8b5cf6;
+		stroke-width: 2;
+	}
+
+	/* Tooltip */
+	.chart-tooltip {
+		position: absolute;
+		pointer-events: none;
+		background: rgba(15, 23, 42, 0.92);
+		border: 1px solid rgba(139, 92, 246, 0.35);
+		backdrop-filter: blur(8px);
+		border-radius: 6px;
+		padding: 0.35rem 0.6rem;
+		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+		z-index: 10;
+		text-align: center;
+		transition: opacity 0.15s ease;
+	}
+
+	.tooltip-price {
+		font-family: var(--font-mono);
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: #ffffff;
+	}
+
+	.tooltip-time {
+		font-size: 0.7rem;
+		color: #94a3b8;
+	}
+
+	.chart-time-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		padding: 0 0.25rem;
+	}
+
+	.point-count-badge {
+		font-size: 0.7rem;
+		color: #a78bfa;
+		background: rgba(139, 92, 246, 0.08);
+		padding: 0.15rem 0.5rem;
+		border-radius: 9999px;
+	}
+
+	/* Live Ticker Bar */
+	.live-ticker-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		background: rgba(0, 0, 0, 0.2);
+		border: 1px solid rgba(255, 255, 255, 0.03);
+		border-radius: 6px;
+		padding: 0.35rem 0.65rem;
+		overflow: hidden;
+	}
+
+	.live-ticker-label {
+		color: var(--text-secondary);
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.live-ticker-val {
+		font-family: var(--font-mono);
+		color: #93c5fd;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		transition: color 0.3s ease;
+	}
+
+	.live-ticker-val.tick-flash {
+		color: #34d399;
 	}
 
 	/* Metrics Grid */
