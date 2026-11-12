@@ -9,6 +9,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "deploy:s3": "astro build && aws s3 sync dist/ s3://leaflogger.com/ --profile de_fucked --delete",
     "astro": "astro"
   },
   "dependencies": {
